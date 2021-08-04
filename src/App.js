@@ -10,18 +10,20 @@ import Loader from "./components/Loader";
 
 class App extends Component {
   state = {
+    query: "",
     pictures: [],
     page: 1,
-    query: "",
+    loading: false,
+    showModal: false,
     largeImage: "",
     imgTags: "",
     error: "",
-    showModal: false,
-    isLoading: false,
   };
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevState.query !== this.state.query) {
+    const prevQuery = prevState.query;
+    const nextQuery = this.state.query;
+    if (prevQuery !== nextQuery) {
       this.fetchPictures();
     }
     if (this.state.page !== 2 && prevState.page !== this.state.page) {
@@ -31,6 +33,25 @@ class App extends Component {
       });
     }
   }
+
+  onChangeQuery = (query) => {
+    this.setState({ query: query, page: 1, pictures: [], error: null });
+  };
+
+  fetchPictures = () => {
+    const { query, page } = this.state;
+    this.setState({ loading: true });
+
+    searchApi(query, page)
+      .then((pictures) => {
+        this.setState((prevState) => ({
+          pictures: [...prevState.pictures, ...pictures],
+          page: prevState.page + 1,
+        }));
+      })
+      .catch((error) => this.setState({ error: "Picture not found" }))
+      .finally(() => this.setState({ loading: false }));
+  };
 
   toggleModal = () => {
     this.setState((state) => ({
@@ -44,43 +65,19 @@ class App extends Component {
     this.toggleModal();
   };
 
-  fetchPictures = () => {
-    const { page, query } = this.state;
-
-    const options = {
-      page,
-      query,
-    };
-
-    this.setState({ isLoading: true });
-
-    searchApi(options)
-      .then((pictures) => {
-        this.setState((prevState) => ({
-          pictures: [...prevState.pictures, ...pictures],
-          page: prevState.page + 1,
-        }));
-      })
-      .catch((error) => this.setState({ error: "Picture not found" }))
-      .finally(() => this.setState({ isLoading: false }));
-  };
-  onChangeQwery = (query) => {
-    this.setState({ query: query, page: 1, pictures: [], error: null });
-  };
-
   render() {
-    const { pictures, isLoading, error, showModal, largeImage, imgTags } =
+    const { pictures, loading, error, showModal, largeImage, imgTags } =
       this.state;
 
     return (
       <div className={style.App}>
-        <SearchForm onSubmit={this.onChangeQwery} />
+        <SearchForm onSubmit={this.onChangeQuery} />
 
         {error && <h1>{error}</h1>}
 
         <ImageGallery pictures={pictures} bigImage={this.bigImage} />
-        {isLoading && <Loader />}
-        {pictures.length > 11 && !isLoading && (
+        {loading && <Loader />}
+        {pictures.length > 11 && !loading && (
           <Button onClick={this.fetchPictures} />
         )}
         {showModal && (
@@ -100,6 +97,6 @@ App.propTypes = {
   imgTags: PropTypes.string,
   error: PropTypes.string,
   showModal: PropTypes.bool,
-  isLoading: PropTypes.bool,
+  loading: PropTypes.bool,
 };
 export default App;

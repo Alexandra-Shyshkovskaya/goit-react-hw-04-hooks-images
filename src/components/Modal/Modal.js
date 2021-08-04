@@ -1,5 +1,4 @@
 import style from "./Modal.module.css";
-
 import { createPortal } from "react-dom";
 import { Component } from "react";
 

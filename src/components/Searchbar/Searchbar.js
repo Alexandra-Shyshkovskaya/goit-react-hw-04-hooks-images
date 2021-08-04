@@ -3,15 +3,19 @@ import style from "./Searchbar.module.css";
 import PropTypes from "prop-types";
 
 class SearchForm extends Component {
-  state = { qwery: "" };
+  state = {
+    query: "",
+  };
 
   handleChange = (e) => {
-    this.setState({ qwery: e.currentTarget.value });
+    this.setState({ query: e.currentTarget.value });
   };
+
   handleSubmit = (e) => {
     e.preventDefault();
-    this.props.onSubmit(this.state.qwery);
-    this.setState({ qwery: "" });
+
+    this.props.onSubmit(this.state.query);
+    this.setState({ query: "" });
   };
 
   render() {
@@ -37,7 +41,7 @@ class SearchForm extends Component {
 }
 
 SearchForm.protoType = {
-  qwery: PropTypes.string,
+  query: PropTypes.string,
 };
 
 export default SearchForm;

@@ -1,12 +1,13 @@
 import style from "./ImageGalleryItem.module.css";
 import PropTypes from "prop-types";
-const ImageGalleryItem = ({ image, onClick }) => {
+
+const ImageGalleryItem = ({ image, tags, onClick }) => {
   return (
     <li className={style.ImageGalleryItem}>
       <img
-        src={image}
-        alt=""
         className={style.ImageGalleryItemImage}
+        src={image}
+        alt={tags}
         onClick={onClick}
       />
     </li>
