@@ -1,5 +1,4 @@
-import React, { Component } from "react";
-import PropTypes from "prop-types";
+import React, { useState, useEffect } from 'react';
 import style from "./App.module.css";
 import searchApi from "./services/searchApi";
 import Modal from "./components/Modal";
@@ -8,95 +7,78 @@ import ImageGallery from "./components/ImageGallery";
 import Button from "./components/Button";
 import Loader from "./components/Loader";
 
-class App extends Component {
-  state = {
-    query: "",
-    pictures: [],
-    page: 1,
-    loading: false,
-    showModal: false,
-    largeImage: "",
-    imgTags: "",
-    error: "",
-  };
+export default function App() {
+  const [pictures, setPictures] = useState([]);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [largeImage, setLargeImage] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState(null);
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevQuery = prevState.query;
-    const nextQuery = this.state.query;
-    if (prevQuery !== nextQuery) {
-      this.fetchPictures();
+const fetchPictures = () => {   
+setLoading(true)
+  searchApi(query, page)
+   .then(newPictures => {
+      setPictures([...pictures, ...newPictures])
+      setPage(page + 1);
+      }) 
+    
+    .catch(error => setError({ error: "Picture not found" }))
+  .finally(() => setLoading(false));
+
+};
+   
+  
+  useEffect(() => {
+    if (!query) {
+      return;
     }
-    if (this.state.page !== 2 && prevState.page !== this.state.page) {
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }
+     fetchPictures();
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
-  onChangeQuery = (query) => {
-    this.setState({ query: query, page: 1, pictures: [], error: null });
+  
+ useEffect(() => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'smooth',
+    });
+  }); 
+
+  const onChangeQuery = query => {
+    setQuery(query);
+    setPage(1);
+    setPictures([]);
+    setError(null)
+}
+
+const toggleModal = () => {
+    setShowModal(!showModal);
   };
 
-  fetchPictures = () => {
-    const { query, page } = this.state;
-    this.setState({ loading: true });
-
-    searchApi(query, page)
-      .then((pictures) => {
-        this.setState((prevState) => ({
-          pictures: [...prevState.pictures, ...pictures],
-          page: prevState.page + 1,
-        }));
-      })
-      .catch((error) => this.setState({ error: "Picture not found" }))
-      .finally(() => this.setState({ loading: false }));
+const bigImage = largeImage => {
+    setLargeImage( largeImage );
+    toggleModal();
   };
-
-  toggleModal = () => {
-    this.setState((state) => ({
-      showModal: !state.showModal,
-    }));
-  };
-
-  bigImage = (largeImage = "") => {
-    this.setState({ largeImage });
-
-    this.toggleModal();
-  };
-
-  render() {
-    const { pictures, loading, error, showModal, largeImage, imgTags } =
-      this.state;
-
-    return (
-      <div className={style.App}>
-        <SearchForm onSubmit={this.onChangeQuery} />
-
-        {error && <h1>{error}</h1>}
-
-        <ImageGallery pictures={pictures} bigImage={this.bigImage} />
-        {loading && <Loader />}
-        {pictures.length > 11 && !loading && (
-          <Button onClick={this.fetchPictures} />
-        )}
-        {showModal && (
-          <Modal showModal={this.bigImage}>
-            <img src={largeImage} alt={imgTags} />
-          </Modal>
+  
+ return (
+  <div className={style.App}>
+    <SearchForm onSubmit={onChangeQuery} />
+    {error && <h1>{error}</h1>}
+    <ImageGallery pictures={pictures} bigImage={bigImage} />
+      {loading && <Loader />}
+      {pictures.length > 11 && !loading && (
+        <Button onClick={fetchPictures} />
+      )}
+      {showModal && (
+        <Modal showModal={bigImage}>
+          <img src={largeImage} alt={largeImage} />
+        </Modal>
         )}
       </div>
     );
-  }
 }
-App.propTypes = {
-  pictures: PropTypes.array,
-  page: PropTypes.number,
-  query: PropTypes.string,
-  largeImage: PropTypes.string,
-  imgTags: PropTypes.string,
-  error: PropTypes.string,
-  showModal: PropTypes.bool,
-  loading: PropTypes.bool,
-};
-export default App;
+  
+
+
